@@ -1,4 +1,4 @@
-package org.osgi.test.cases.http.whiteboard.junit;
+package org.osgi.test.cases.http.whiteboard.secure.junit;
 
 import java.io.IOException;
 import java.io.InputStream;
