@@ -1,5 +1,4 @@
 # Set javac settings from JDT prefs
--include: ${includes}/jdt.bnd, ${includes}/osgi.tck.junit-platform.bnd, ${includes}/tck.bnd, ${includes}/cmpn.bnd
 
 -conditionalpackage = org.osgi.test.support.*,\
  org.osgi.util.converter.*,\
@@ -20,32 +19,8 @@ Export-Package: ${p}.junit.mock
 	tb1.jar,\
 	tb2.jar
 
--buildpath = \
-	${osgi.annotation.buildpath},\
-	org.osgi.test.support;version=project,\
-	org.osgi.framework;maven-scope=provided;version=1.8, \
-	org.osgi.dto;maven-scope=provided;version=1.0, \
-	org.osgi.resource;maven-scope=provided;version=1.0, \
-	org.osgi.util.tracker;maven-scope=provided;version=1.5, \
-	org.osgi.namespace.contract;version=1.0,\
-	org.osgi.namespace.implementation;version=1.0,\
-	org.osgi.namespace.service;version=1.0,\
-	org.osgi.service.servlet;version=latest,\
-	org.osgi.util.converter;version=1.0,\
-	org.osgi.util.function;version=1.0,\
-	jakarta.servlet-api;version=5.0,\
-	org.apache.commons.logging;version=1.2,\
-	org.apache.httpcomponents.httpcore;version=4.4.6,\
-	org.apache.httpcomponents.httpclient;version=4.5.3
 
--runbundles = \
-    org.osgi.util.function;version=latest, \
-    org.osgi.impl.service.servlet;version=latest
 
--runproperties = ${runproperties}, \
-	org.apache.felix.http.host=127.0.0.1, \
-	org.osgi.service.http.port=8080, \
-	org.apache.felix.http.whiteboard.changecount.delay=0
 
 -signaturetest = \
   org.osgi.service.servlet.context, \
@@ -53,3 +28,16 @@ Export-Package: ${p}.junit.mock
   org.osgi.service.servlet.runtime, \
   org.osgi.service.servlet.runtime.dto
 
+p: org.osgi.test.cases.servlet
+
+# Maven build: workspace includes replaced inline (from cnf/includes and build.bnd in osgi/osgi)
+# -make.maven, not -make: the key is a map entry and would displace
+# a project-level -make (webcontainer also builds .war recipes this
+# way). bnd merges all -make.* entries.
+-make.maven: (*).(jar); type=bnd; recipe="bnd/$1.bnd"
+
+testcases.junit3: ${classes;EXTENDS;junit.framework.TestCase;CONCRETE}
+testcases.junit4: ${classes;HIERARCHY_ANNOTATED;org.junit.Test;CONCRETE}
+testcases.junit5: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+Test-Cases: ${sort;${uniq;${testcases.junit3};${testcases.junit4};${testcases.junit5}}}
+-plugin.signaturetest: SignatureTest
