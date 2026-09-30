@@ -1,5 +1,9 @@
 # org.osgi.service.servlet
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/osgi/org.osgi.service.servlet/badge)](https://securityscorecards.dev/viewer/?uri=github.com/osgi/org.osgi.service.servlet)
+[![build](https://github.com/osgi/org.osgi.service.servlet/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/osgi/org.osgi.service.servlet/actions/workflows/build.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/org.osgi/org.osgi.service.servlet)](https://central.sonatype.com/artifact/org.osgi/org.osgi.service.servlet)
+
 OSGi Servlet (Whiteboard) Specification (formerly Http Whiteboard / Http Service)
 
 Part of the [OSGi Specification Project](https://projects.eclipse.org/projects/technology.osgi).
