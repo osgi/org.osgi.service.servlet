@@ -16,7 +16,7 @@
 		<assertj.version>3.23.1</assertj.version>
 		<awaitility.version>4.2.0</awaitility.version>
 		<byte-buddy.version>1.12.10</byte-buddy.version>
-		<hamcrest.version>2.2</hamcrest.version>
+		<hamcrest.version>3.0</hamcrest.version>
 		<httpclient-osgi.version>4.5.14</httpclient-osgi.version>
 		<httpcore-osgi.version>4.4.6</httpcore-osgi.version>
 		<jakarta.servlet-api.version>5.0.0</jakarta.servlet-api.version>
