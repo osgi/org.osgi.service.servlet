@@ -15,7 +15,7 @@
 	<properties>
 		<assertj.version>3.23.1</assertj.version>
 		<awaitility.version>4.2.0</awaitility.version>
-		<byte-buddy.version>1.12.10</byte-buddy.version>
+		<byte-buddy.version>1.18.14</byte-buddy.version>
 		<hamcrest.version>2.2</hamcrest.version>
 		<httpclient-osgi.version>4.5.14</httpclient-osgi.version>
 		<httpcore-osgi.version>4.4.6</httpcore-osgi.version>
