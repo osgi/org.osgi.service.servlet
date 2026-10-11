@@ -17,7 +17,9 @@
  *******************************************************************************/
 package org.osgi.test.cases.servlet.junit;
 
-import java.lang.reflect.Array;
+import static java.lang.reflect.Array.getLength;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.jupiter.api.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
@@ -56,7 +59,8 @@ import org.osgi.service.servlet.whiteboard.HttpWhiteboardConstants;
 import org.osgi.test.cases.servlet.junit.mock.MockFilter;
 import org.osgi.test.cases.servlet.junit.mock.MockSCL;
 import org.osgi.test.cases.servlet.junit.mock.MockServlet;
-import org.osgi.test.support.version.Versions;
+import org.osgi.util.converter.Converters;
+import org.osgi.util.converter.TypeReference;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
@@ -65,33 +69,36 @@ import jakarta.servlet.ServletContextListener;
 
 public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 
+	@Test
 	public void test_140_9_4to6() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Collection<ServiceReference<HttpServiceRuntime>> references = context.getServiceReferences(HttpServiceRuntime.class, null);
 
-		assertEquals(1, references.size());
+		assertThat(references).hasSize(1);
 	}
 
+	@Test
 	public void test_140_9_HTTP_SERVICE_ENDPOINT() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		ServiceReference<HttpServiceRuntime> srA = context.getServiceReference(HttpServiceRuntime.class);
 
 		Object value = srA.getProperty(HttpServiceRuntimeConstants.HTTP_SERVICE_ENDPOINT);
-		assertNotNull(value);
+		assertThat(value).isNotNull();
 
 		Collection<String> endpoints = getEndPoints(srA);
 
 		for (String endPoint : endpoints) {
-			assertTrue(endPoint.endsWith("/"));
+			assertThat(endPoint).endsWith("/");
 		}
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_default_servlet() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		ServletContextDTO servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/a");
@@ -99,14 +106,15 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertEquals(1, servletContextDTO.servletDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.servletDTOs[0].serviceId);
+		assertThat(servletContextDTO.servletDTOs).hasSize(1);
+		assertThat(servletContextDTO.servletDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_default_resource() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		ServletContextDTO servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_RESOURCE_PATTERN, "/a");
@@ -115,14 +123,15 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertEquals(1, servletContextDTO.resourceDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.resourceDTOs[0].serviceId);
+		assertThat(servletContextDTO.resourceDTOs).hasSize(1);
+		assertThat(servletContextDTO.resourceDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_default_filter() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		ServletContextDTO servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_FILTER_PATTERN, "/a");
@@ -130,14 +139,15 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertEquals(1, servletContextDTO.filterDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.filterDTOs[0].serviceId);
+		assertThat(servletContextDTO.filterDTOs).hasSize(1);
+		assertThat(servletContextDTO.filterDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_default_errorPage() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		ServletContextDTO servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_ERROR_PAGE, "404");
@@ -146,14 +156,15 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertEquals(1, servletContextDTO.errorPageDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.errorPageDTOs[0].serviceId);
+		assertThat(servletContextDTO.errorPageDTOs).hasSize(1);
+		assertThat(servletContextDTO.errorPageDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_default_listener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		ServletContextDTO servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
@@ -163,19 +174,20 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName(DEFAULT);
-		assertEquals(1, servletContextDTO.listenerDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.listenerDTOs[0].serviceId);
+		assertThat(servletContextDTO.listenerDTOs).hasSize(1);
+		assertThat(servletContextDTO.listenerDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_custom_servlet() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "a");
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_PATH, "/a");
 		serviceRegistrations.add(context.registerService(ServletContextHelper.class, new ServletContextHelper() {}, properties));
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("a");
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT, "(osgi.http.whiteboard.context.name=a)");
@@ -184,19 +196,20 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName("a");
-		assertEquals(1, servletContextDTO.servletDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.servletDTOs[0].serviceId);
+		assertThat(servletContextDTO.servletDTOs).hasSize(1);
+		assertThat(servletContextDTO.servletDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_custom_resource() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "a");
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_PATH, "/a");
 		serviceRegistrations.add(context.registerService(ServletContextHelper.class, new ServletContextHelper() {}, properties));
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("a");
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT, "(osgi.http.whiteboard.context.name=a)");
@@ -206,19 +219,20 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName("a");
-		assertEquals(1, servletContextDTO.resourceDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.resourceDTOs[0].serviceId);
+		assertThat(servletContextDTO.resourceDTOs).hasSize(1);
+		assertThat(servletContextDTO.resourceDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_custom_filter() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "a");
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_PATH, "/a");
 		serviceRegistrations.add(context.registerService(ServletContextHelper.class, new ServletContextHelper() {}, properties));
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("a");
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT, "(osgi.http.whiteboard.context.name=a)");
@@ -227,19 +241,20 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName("a");
-		assertEquals(1, servletContextDTO.filterDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.filterDTOs[0].serviceId);
+		assertThat(servletContextDTO.filterDTOs).hasSize(1);
+		assertThat(servletContextDTO.filterDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_custom_errorPage() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "a");
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_PATH, "/a");
 		serviceRegistrations.add(context.registerService(ServletContextHelper.class, new ServletContextHelper() {}, properties));
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("a");
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT, "(osgi.http.whiteboard.context.name=a)");
@@ -249,19 +264,20 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName("a");
-		assertEquals(1, servletContextDTO.errorPageDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.errorPageDTOs[0].serviceId);
+		assertThat(servletContextDTO.errorPageDTOs).hasSize(1);
+		assertThat(servletContextDTO.errorPageDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_custom_listener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "a");
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_PATH, "/a");
 		serviceRegistrations.add(context.registerService(ServletContextHelper.class, new ServletContextHelper() {}, properties));
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("a");
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT, "(osgi.http.whiteboard.context.name=a)");
@@ -272,12 +288,13 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		servletContextDTO = getServletContextDTOByName("a");
-		assertEquals(1, servletContextDTO.listenerDTOs.length);
-		assertEquals(getServiceId(sr), servletContextDTO.listenerDTOs[0].serviceId);
+		assertThat(servletContextDTO.listenerDTOs).hasSize(1);
+		assertThat(servletContextDTO.listenerDTOs[0].serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_failed_servletContextHelper() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, 34);
@@ -285,11 +302,12 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		FailedServletContextDTO failedServletContextDTO = getFailedServletContextDTOByServiceId(getServiceId(sr));
-		assertNotNull(failedServletContextDTO);
+		assertThat(failedServletContextDTO).isNotNull();
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_failed_servlet() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, 24);
@@ -297,11 +315,12 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		FailedServletDTO failedServletDTO = getFailedServletDTOByServiceId(getServiceId(sr));
-		assertNotNull(failedServletDTO);
+		assertThat(failedServletDTO).isNotNull();
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_failed_resource() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_RESOURCE_PATTERN, 456);
@@ -310,11 +329,12 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		FailedResourceDTO failedResourceDTO = getFailedResourceDTOByServiceId(getServiceId(sr));
-		assertNotNull(failedResourceDTO);
+		assertThat(failedResourceDTO).isNotNull();
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_failed_filter() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_FILTER_PATTERN, 678);
@@ -322,11 +342,12 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		FailedFilterDTO failedFilterDTO = getFailedFilterDTOByServiceId(getServiceId(sr));
-		assertNotNull(failedFilterDTO);
+		assertThat(failedFilterDTO).isNotNull();
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_failed_errorPage() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_ERROR_PAGE, "404");
@@ -340,11 +361,12 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		FailedErrorPageDTO failedErrorPageDTO = getFailedErrorPageDTOByServiceId(getServiceId(sr));
-		assertNotNull(failedErrorPageDTO);
+		assertThat(failedErrorPageDTO).isNotNull();
 	}
 
+	@Test
 	public void test_140_9_ServletContextDTO_failed_listener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, 4567);
@@ -354,11 +376,12 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		FailedListenerDTO failedListenerDTO = getFailedListenerDTOByServiceId(getServiceId(sr));
-		assertNotNull(failedListenerDTO);
+		assertThat(failedListenerDTO).isNotNull();
 	}
 
+	@Test
 	public void test_140_9_RequestInfoDTO_servlet() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/a");
@@ -371,14 +394,15 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(context.registerService(Servlet.class, new MockServlet(), properties));
 
 		RequestInfoDTO requestInfoDTO = calculateRequestInfoDTO("/a");
-		assertNotNull(requestInfoDTO);
-		assertNotNull(requestInfoDTO.servletDTO);
-		assertNull(requestInfoDTO.resourceDTO);
-		assertEquals(getServiceId(sr), requestInfoDTO.servletDTO.serviceId);
+		assertThat(requestInfoDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO).isNotNull();
+		assertThat(requestInfoDTO.resourceDTO).isNull();
+		assertThat(requestInfoDTO.servletDTO.serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_RequestInfoDTO_resource() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_RESOURCE_PATTERN, "/a");
@@ -391,14 +415,15 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(context.registerService(Servlet.class, new MockServlet(), properties));
 
 		RequestInfoDTO requestInfoDTO = calculateRequestInfoDTO("/a");
-		assertNotNull(requestInfoDTO);
-		assertNull(requestInfoDTO.servletDTO);
-		assertNotNull(requestInfoDTO.resourceDTO);
-		assertEquals(getServiceId(sr), requestInfoDTO.resourceDTO.serviceId);
+		assertThat(requestInfoDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO).isNull();
+		assertThat(requestInfoDTO.resourceDTO).isNotNull();
+		assertThat(requestInfoDTO.resourceDTO.serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_9_RequestInfoDTO_filters() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_RESOURCE_PATTERN, "/a");
@@ -415,15 +440,16 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(context.registerService(Filter.class, new MockFilter(), properties));
 
 		RequestInfoDTO requestInfoDTO = calculateRequestInfoDTO("/a");
-		assertNotNull(requestInfoDTO);
-		assertNull(requestInfoDTO.servletDTO);
-		assertNotNull(requestInfoDTO.resourceDTO);
-		assertEquals(2, requestInfoDTO.filterDTOs.length);
-		assertEquals(getServiceId(sr), requestInfoDTO.resourceDTO.serviceId);
+		assertThat(requestInfoDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO).isNull();
+		assertThat(requestInfoDTO.resourceDTO).isNotNull();
+		assertThat(requestInfoDTO.filterDTOs).hasSize(2);
+		assertThat(requestInfoDTO.resourceDTO.serviceId).isEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_11_1() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		ServiceReference<HttpServiceRuntime> srA = context.getServiceReference(HttpServiceRuntime.class);
 
@@ -431,7 +457,7 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 
 		List<BundleCapability> capabilities = bundleWiring.getCapabilities(ImplementationNamespace.IMPLEMENTATION_NAMESPACE);
 
-		assertTrue(capabilities.size() > 0);
+		assertThat(capabilities.size()).isGreaterThan(0);
 		boolean found = false;
 
 		for (Capability capability : capabilities) {
@@ -448,21 +474,22 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 
 					List<String> packages = Arrays.asList(uses.split("\\s*,\\s*"));
 
-					assertTrue(packages.contains("jakarta.servlet"));
-					assertTrue(packages.contains("jakarta.servlet.http"));
-					assertTrue(packages.contains("org.osgi.service.servlet.context"));
-					assertTrue(packages.contains("org.osgi.service.servlet.whiteboard"));
+					assertThat(packages.contains("jakarta.servlet")).isTrue();
+					assertThat(packages.contains("jakarta.servlet.http")).isTrue();
+					assertThat(packages.contains("org.osgi.service.servlet.context")).isTrue();
+					assertThat(packages.contains("org.osgi.service.servlet.whiteboard")).isTrue();
 
 					found = true;
 				}
 			}
 		}
 
-		assertTrue(found);
+		assertThat(found).isTrue();
 	}
 
+	@Test
 	public void test_140_11_2() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		ServiceReference<HttpServiceRuntime> srA = context.getServiceReference(HttpServiceRuntime.class);
 
@@ -492,8 +519,10 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 				String name = (String) attributes.get(ContractNamespace.CONTRACT_NAMESPACE);
 
 				if ("JakartaServlet".equals(name)) {
-					Collection<Version> versions = Versions.plus(attributes.get(
-							ContractNamespace.CAPABILITY_VERSION_ATTRIBUTE));
+					Collection<Version> versions = Converters.standardConverter()
+							.convert(attributes.get(
+							ContractNamespace.CAPABILITY_VERSION_ATTRIBUTE))
+							.to(new TypeReference<Collection<Version>>() {});
 
 					for (Version v : versions) {
 						if (v.equals(new Version("5.0.0"))) {
@@ -506,12 +535,12 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 							List<String> packages = Arrays
 									.asList(uses.split("\\s*,\\s*"));
 
-							assertTrue(packages.contains("jakarta.servlet"));
-							assertTrue(packages
-									.contains("jakarta.servlet.annotation"));
-							assertTrue(packages
-									.contains("jakarta.servlet.descriptor"));
-							assertTrue(packages.contains("jakarta.servlet.http"));
+							assertThat(packages.contains("jakarta.servlet")).isTrue();
+							assertThat(packages
+									.contains("jakarta.servlet.annotation")).isTrue();
+							assertThat(packages
+									.contains("jakarta.servlet.descriptor")).isTrue();
+							assertThat(packages.contains("jakarta.servlet.http")).isTrue();
 
 							foundContract = true;
 						}
@@ -519,7 +548,7 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 				}
 			}
 
-			assertTrue(foundContract);
+			assertThat(foundContract).isTrue();
 		}
 		else {
 			List<BundleRequirement> requirements = bundleWiring.getRequirements(ContractNamespace.CONTRACT_NAMESPACE);
@@ -536,8 +565,10 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 					String name = (String) attributes.get(ContractNamespace.CONTRACT_NAMESPACE);
 
 					if ("JakartaServlet".equals(name)) {
-						Collection<Version> versions = Versions.plus(attributes
-								.get(ContractNamespace.CAPABILITY_VERSION_ATTRIBUTE));
+						Collection<Version> versions = Converters.standardConverter()
+							.convert(attributes
+								.get(ContractNamespace.CAPABILITY_VERSION_ATTRIBUTE))
+							.to(new TypeReference<Collection<Version>>() {});
 
 						for (Version v : versions) {
 							if (v.equals(new Version("5.0.0"))) {
@@ -550,13 +581,13 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 								List<String> packages = Arrays
 										.asList(uses.split("\\s*,\\s*"));
 
-								assertTrue(packages.contains("jakarta.servlet"));
-								assertTrue(packages
-										.contains("jakarta.servlet.annotation"));
-								assertTrue(packages
-										.contains("jakarta.servlet.descriptor"));
-								assertTrue(packages
-										.contains("jakarta.servlet.http"));
+								assertThat(packages.contains("jakarta.servlet")).isTrue();
+								assertThat(packages
+										.contains("jakarta.servlet.annotation")).isTrue();
+								assertThat(packages
+										.contains("jakarta.servlet.descriptor")).isTrue();
+								assertThat(packages
+										.contains("jakarta.servlet.http")).isTrue();
 
 								foundContract = true;
 							}
@@ -565,12 +596,13 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 				}
 			}
 
-			assertTrue(foundContract);
+			assertThat(foundContract).isTrue();
 		}
 	}
 
+	@Test
 	public void test_140_11_3() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		ServiceReference<HttpServiceRuntime> srA = context.getServiceReference(HttpServiceRuntime.class);
 
@@ -592,16 +624,16 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 
 				List<String> packages = Arrays.asList(uses.split(","));
 
-				assertTrue(packages.contains(
-						"org.osgi.service.servlet.runtime"));
-				assertTrue(packages.contains(
-						"org.osgi.service.servlet.runtime.dto"));
+				assertThat(packages.contains(
+						"org.osgi.service.servlet.runtime")).isTrue();
+				assertThat(packages.contains(
+						"org.osgi.service.servlet.runtime.dto")).isTrue();
 
 				found = true;
 			}
 		}
 
-		assertTrue(found);
+		assertThat(found).isTrue();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -612,7 +644,7 @@ public class HttpServiceRuntimeTestCase extends BaseHttpWhiteboardTestCase {
 			return Collections.emptyList();
 		}
 		else if (value.getClass().isArray()) {
-			assertTrue(Array.getLength(value) > 0);
+			assertThat(getLength(value)).isGreaterThan(0);
 
 			return Arrays.asList((String[]) value);
 		}

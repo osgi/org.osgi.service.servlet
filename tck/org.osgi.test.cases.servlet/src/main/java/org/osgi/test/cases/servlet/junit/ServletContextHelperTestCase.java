@@ -18,6 +18,10 @@
 
 package org.osgi.test.cases.servlet.junit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.fail;
+
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +35,7 @@ import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.jupiter.api.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -57,8 +62,9 @@ import jakarta.servlet.http.HttpServlet;
 
 public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
+	@Test
 	public void test_140_2_6to7() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context1");
@@ -83,11 +89,12 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc2), properties));
 
-		assertNotSame(sc1.get(), sc2.get());
+		assertThat(sc2.get()).isNotSameAs(sc1.get());
 	}
 
+	@Test
 	public void test_140_2_7to8() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context1");
@@ -101,11 +108,12 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc1), properties));
 
-		assertEquals("context1", sc1.get().getServletContextName());
+		assertThat(sc1.get().getServletContextName()).isEqualTo("context1");
 	}
 
+	@Test
 	public void test_140_2_8to9() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
@@ -113,13 +121,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc1), properties));
 
-		assertEquals(DEFAULT, sc1.get().getServletContextName());
+		assertThat(sc1.get().getServletContextName()).isEqualTo(DEFAULT);
 	}
 
+	@Test
 	public void test_140_2_10to12() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
-		Bundle bundle = install("/tb2.jar");
+		Bundle bundle = installer.installBundle("/tb2.jar", false);
 
 		try {
 			bundle.start();
@@ -150,25 +159,27 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 			String bsn1 = getSymbolicName(classLoader1);
 			String bsn2 = getSymbolicName(classLoader2);
 
-			assertFalse(bsn1.equals(bsn2));
+			assertThat(bsn1).isNotEqualTo(bsn2);
 		} finally {
 			bundle.uninstall();
 		}
 	}
 
+	@Test
 	public void test_140_2_15to16() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		ServiceRegistration<ServletContextListener> serviceRegistration = context.registerService(ServletContextListener.class, new MockSCL(new AtomicReference<ServletContext>()), properties);
 		serviceRegistrations.add(serviceRegistration);
 
-		assertEquals(context.getBundle(), serviceRegistration.getReference().getBundle());
+		assertThat(serviceRegistration.getReference().getBundle()).isEqualTo(context.getBundle());
 	}
 
+	@Test
 	public void test_140_2_17to22() throws Exception {
-		final BundleContext context = getContext();
+		final BundleContext context = this.context.getBundle().getBundleContext();
 
 		Dictionary<String, Object> contextProperties = new Hashtable<String, Object>();
             contextProperties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "mycontext");
@@ -211,17 +222,18 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		ServiceRegistration<ServletContextListener> serviceRegistration = context.registerService(ServletContextListener.class, new MockSCL(sc1), properties);
 		serviceRegistrations.add(serviceRegistration);
 
-		assertNull(sc1.get());
+		assertThat(sc1.get()).isNull();
 
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc2), properties));
 
-		assertNotNull(sc2.get());
+		assertThat(sc2.get()).isNotNull();
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_type() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, Boolean.TRUE);
@@ -234,15 +246,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		FailedServletContextDTO[] failedServletContextDTOs = runtimeDTO.failedServletContextDTOs;
 
-		assertNotNull(failedServletContextDTOs);
-		assertEquals(1, failedServletContextDTOs.length);
-		assertEquals(
-				DTOConstants.FAILURE_REASON_VALIDATION_FAILED,
-				failedServletContextDTOs[0].failureReason);
+		assertThat(failedServletContextDTOs).isNotNull();
+		assertThat(failedServletContextDTOs).hasSize(1);
+		assertThat(failedServletContextDTOs[0].failureReason).isEqualTo(DTOConstants.FAILURE_REASON_VALIDATION_FAILED);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_required() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_PATH, "/context1");
@@ -254,15 +265,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		FailedServletContextDTO[] failedServletContextDTOs = runtimeDTO.failedServletContextDTOs;
 
-		assertNotNull(failedServletContextDTOs);
-		assertEquals(1, failedServletContextDTOs.length);
-		assertEquals(
-				DTOConstants.FAILURE_REASON_VALIDATION_FAILED,
-				failedServletContextDTOs[0].failureReason);
+		assertThat(failedServletContextDTOs).isNotNull();
+		assertThat(failedServletContextDTOs).hasSize(1);
+		assertThat(failedServletContextDTOs[0].failureReason).isEqualTo(DTOConstants.FAILURE_REASON_VALIDATION_FAILED);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_syntax() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "$badname%");
@@ -275,15 +285,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		FailedServletContextDTO[] failedServletContextDTOs = runtimeDTO.failedServletContextDTOs;
 
-		assertNotNull(failedServletContextDTOs);
-		assertEquals(1, failedServletContextDTOs.length);
-		assertEquals(
-				DTOConstants.FAILURE_REASON_VALIDATION_FAILED,
-				failedServletContextDTOs[0].failureReason);
+		assertThat(failedServletContextDTOs).isNotNull();
+		assertThat(failedServletContextDTOs).hasSize(1);
+		assertThat(failedServletContextDTOs[0].failureReason).isEqualTo(DTOConstants.FAILURE_REASON_VALIDATION_FAILED);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_bindUsingContextSelect() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		String contextName = "context1";
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -298,11 +307,12 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc1), properties));
 
-		assertEquals(contextName, sc1.get().getServletContextName());
+		assertThat(sc1.get().getServletContextName()).isEqualTo(contextName);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_overrideDefault() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		String contextPath = "/context1";
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -316,12 +326,13 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc1), properties));
 
-		assertEquals(DEFAULT, sc1.get().getServletContextName());
-		assertEquals(contextPath, sc1.get().getContextPath());
+		assertThat(sc1.get().getServletContextName()).isEqualTo(DEFAULT);
+		assertThat(sc1.get().getContextPath()).isEqualTo(contextPath);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_highestRanked() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		String contextPath = "/otherContext";
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -341,12 +352,13 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc1), properties));
 
-		assertEquals(DEFAULT, sc1.get().getServletContextName());
-		assertEquals(contextPath, sc1.get().getContextPath());
+		assertThat(sc1.get().getServletContextName()).isEqualTo(DEFAULT);
+		assertThat(sc1.get().getContextPath()).isEqualTo(contextPath);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_tieGoesToOldest() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		String contextPath = "/context1";
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -367,12 +379,13 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc1), properties));
 
-		assertEquals(DEFAULT, sc1.get().getServletContextName());
-		assertEquals(contextPath, sc1.get().getContextPath());
+		assertThat(sc1.get().getServletContextName()).isEqualTo(DEFAULT);
+		assertThat(sc1.get().getContextPath()).isEqualTo(contextPath);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_PATH_type() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context");
@@ -385,15 +398,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		FailedServletContextDTO[] failedServletContextDTOs = runtimeDTO.failedServletContextDTOs;
 
-		assertNotNull(failedServletContextDTOs);
-		assertEquals(1, failedServletContextDTOs.length);
-		assertEquals(
-				DTOConstants.FAILURE_REASON_VALIDATION_FAILED,
-				failedServletContextDTOs[0].failureReason);
+		assertThat(failedServletContextDTOs).isNotNull();
+		assertThat(failedServletContextDTOs).hasSize(1);
+		assertThat(failedServletContextDTOs[0].failureReason).isEqualTo(DTOConstants.FAILURE_REASON_VALIDATION_FAILED);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_PATH_required() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context");
@@ -405,15 +417,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		FailedServletContextDTO[] failedServletContextDTOs = runtimeDTO.failedServletContextDTOs;
 
-		assertNotNull(failedServletContextDTOs);
-		assertEquals(1, failedServletContextDTOs.length);
-		assertEquals(
-				DTOConstants.FAILURE_REASON_VALIDATION_FAILED,
-				failedServletContextDTOs[0].failureReason);
+		assertThat(failedServletContextDTOs).isNotNull();
+		assertThat(failedServletContextDTOs).hasSize(1);
+		assertThat(failedServletContextDTOs[0].failureReason).isEqualTo(DTOConstants.FAILURE_REASON_VALIDATION_FAILED);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_PATH_syntax() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context");
@@ -426,15 +437,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		FailedServletContextDTO[] failedServletContextDTOs = runtimeDTO.failedServletContextDTOs;
 
-		assertNotNull(failedServletContextDTOs);
-		assertEquals(1, failedServletContextDTOs.length);
-		assertEquals(
-				DTOConstants.FAILURE_REASON_VALIDATION_FAILED,
-				failedServletContextDTOs[0].failureReason);
+		assertThat(failedServletContextDTOs).isNotNull();
+		assertThat(failedServletContextDTOs).hasSize(1);
+		assertThat(failedServletContextDTOs[0].failureReason).isEqualTo(DTOConstants.FAILURE_REASON_VALIDATION_FAILED);
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_PATH_defaultPath() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
@@ -443,11 +453,12 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		ServiceRegistration<ServletContextListener> serviceRegistration = context.registerService(ServletContextListener.class, new MockSCL(sc1), properties);
 		serviceRegistrations.add(serviceRegistration);
 
-		assertEquals("", sc1.get().getContextPath());
+		assertThat(sc1.get().getContextPath()).isEmpty();
 	}
 
+	@Test
 	public void test_table_140_1_HTTP_WHITEBOARD_CONTEXT_PATH_overrideDefault() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		String contextPath = "/context1";
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -461,12 +472,13 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc1), properties));
 
-		assertEquals(DEFAULT, sc1.get().getServletContextName());
-		assertEquals(contextPath, sc1.get().getContextPath());
+		assertThat(sc1.get().getServletContextName()).isEqualTo(DEFAULT);
+		assertThat(sc1.get().getContextPath()).isEqualTo(contextPath);
 	}
 
+	@Test
 	public void test_table_140_1_INIT_PARAMs() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context");
@@ -485,16 +497,17 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		List<String> initParamNames = Collections.list(sc1.get().getInitParameterNames());
 
-		assertTrue(initParamNames.contains("p1"));
-		assertTrue(initParamNames.contains("p2"));
-		assertFalse(initParamNames.contains("p3"));
+		assertThat(initParamNames.contains("p1")).isTrue();
+		assertThat(initParamNames.contains("p2")).isTrue();
+		assertThat(initParamNames.contains("p3")).isFalse();
 
-		assertEquals("v1", sc1.get().getInitParameter("p1"));
-		assertEquals("v2", sc1.get().getInitParameter("p2"));
+		assertThat(sc1.get().getInitParameter("p1")).isEqualTo("v1");
+		assertThat(sc1.get().getInitParameter("p2")).isEqualTo("v2");
 	}
 
+	@Test
 	public void test_140_2_23to25() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "foo");
@@ -530,20 +543,21 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("foobar");
 
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		HttpServiceRuntime httpServiceRuntime = getHttpServiceRuntime();
 
 		RequestInfoDTO requestInfoDTO = httpServiceRuntime.calculateRequestInfoDTO("/foo/bar/someServlet");
 
-		assertNotNull(requestInfoDTO);
-		assertNotNull(requestInfoDTO.servletDTO);
-		assertEquals(servletContextDTO.serviceId, requestInfoDTO.servletDTO.servletContextId);
-		assertEquals("second", requestInfoDTO.servletDTO.name);
+		assertThat(requestInfoDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO.servletContextId).isEqualTo(servletContextDTO.serviceId);
+		assertThat(requestInfoDTO.servletDTO.name).isEqualTo("second");
 	}
 
+	@Test
 	public void test_140_2_26to27() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "foo");
@@ -580,20 +594,21 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("foobar");
 
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		HttpServiceRuntime httpServiceRuntime = getHttpServiceRuntime();
 
 		RequestInfoDTO requestInfoDTO = httpServiceRuntime.calculateRequestInfoDTO("/foo/bar/someServlet");
 
-		assertNotNull(requestInfoDTO);
-		assertNotNull(requestInfoDTO.servletDTO);
-		assertEquals(servletContextDTO.serviceId, requestInfoDTO.servletDTO.servletContextId);
-		assertEquals("second", requestInfoDTO.servletDTO.name);
+		assertThat(requestInfoDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO.servletContextId).isEqualTo(servletContextDTO.serviceId);
+		assertThat(requestInfoDTO.servletDTO.name).isEqualTo("second");
 	}
 
+	@Test
 	public void test_140_2_27() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "foo");
@@ -631,18 +646,19 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("foo");
 
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		RequestInfoDTO requestInfoDTO = calculateRequestInfoDTO("/foo/bar/someServlet");
 
-		assertNotNull(requestInfoDTO);
-		assertNotNull(requestInfoDTO.servletDTO);
-		assertEquals(servletContextDTO.serviceId, requestInfoDTO.servletDTO.servletContextId);
-		assertEquals("first", requestInfoDTO.servletDTO.name);
+		assertThat(requestInfoDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO.servletContextId).isEqualTo(servletContextDTO.serviceId);
+		assertThat(requestInfoDTO.servletDTO.name).isEqualTo("first");
 	}
 
+	@Test
 	public void test_140_2_34to36() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "foo");
@@ -678,20 +694,21 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContextDTO servletContextDTO = getServletContextDTOByName("foo");
 
-		assertNotNull(servletContextDTO);
+		assertThat(servletContextDTO).isNotNull();
 
 		HttpServiceRuntime httpServiceRuntime = getHttpServiceRuntime();
 
 		RequestInfoDTO requestInfoDTO = httpServiceRuntime.calculateRequestInfoDTO("/foo/bars/someServlet");
 
-		assertNotNull(requestInfoDTO);
-		assertNotNull(requestInfoDTO.servletDTO);
-		assertEquals(servletContextDTO.serviceId, requestInfoDTO.servletDTO.servletContextId);
-		assertEquals("first", requestInfoDTO.servletDTO.name);
+		assertThat(requestInfoDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO).isNotNull();
+		assertThat(requestInfoDTO.servletDTO.servletContextId).isEqualTo(servletContextDTO.serviceId);
+		assertThat(requestInfoDTO.servletDTO.name).isEqualTo("first");
 	}
 
+	@Test
 	public void test_140_2_39to41() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "foo");
@@ -706,14 +723,13 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		FailedServletContextDTO failedServletContextDTO = getFailedServletContextDTOByName("foo");
 
-		assertNotNull(failedServletContextDTO);
-		assertEquals(
-				DTOConstants.FAILURE_REASON_SHADOWED_BY_OTHER_SERVICE,
-				failedServletContextDTO.failureReason);
+		assertThat(failedServletContextDTO).isNotNull();
+		assertThat(failedServletContextDTO.failureReason).isEqualTo(DTOConstants.FAILURE_REASON_SHADOWED_BY_OTHER_SERVICE);
 	}
 
+	@Test
 	public void test_140_2_41to43() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, DEFAULT);
@@ -723,18 +739,15 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		FailedServletContextDTO failedServletContextDTO = getFailedServletContextDTOByName(DEFAULT);
 
-		assertNotNull(failedServletContextDTO);
-		assertEquals(
-				DTOConstants.FAILURE_REASON_SHADOWED_BY_OTHER_SERVICE,
-				failedServletContextDTO.failureReason);
-		assertEquals("/", failedServletContextDTO.contextPath);
-		assertNotSame(
-				getServiceId(sr),
-				failedServletContextDTO.serviceId);
+		assertThat(failedServletContextDTO).isNotNull();
+		assertThat(failedServletContextDTO.failureReason).isEqualTo(DTOConstants.FAILURE_REASON_SHADOWED_BY_OTHER_SERVICE);
+		assertThat(failedServletContextDTO.contextPath).isEqualTo("/");
+		assertThat(failedServletContextDTO.serviceId).isNotEqualTo(getServiceId(sr));
 	}
 
+	@Test
 	public void test_140_2_1() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
@@ -744,13 +757,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		assertNull(servletContext.getMimeType("index.html"));
+		assertThat(servletContext.getMimeType("index.html")).isNull();
 	}
 
+	@Test
 	public void test_140_2_2() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
@@ -760,13 +774,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		assertNull(servletContext.getRealPath("META-INF/MANIFEST.MF"));
+		assertThat(servletContext.getRealPath("META-INF/MANIFEST.MF")).isNull();
 	}
 
+	@Test
 	public void test_140_2_3() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -775,13 +790,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		assertNotNull(servletContext.getResource("META-INF/MANIFEST.MF"));
+		assertThat(servletContext.getResource("META-INF/MANIFEST.MF")).isNotNull();
 	}
 
+	@Test
 	public void test_140_2_4() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -790,13 +806,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		assertNotNull(servletContext.getResourcePaths("META-INF/"));
+		assertThat(servletContext.getResourcePaths("META-INF/")).isNotNull();
 	}
 
+	@Test
 	public void test_140_2_6_addFilter() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -805,32 +822,21 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.addFilter((String) null, (Class<? extends jakarta.servlet.Filter>) null);
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addFilter((String) null, (Class<? extends jakarta.servlet.Filter>) null));
 
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addFilter((String) null, (jakarta.servlet.Filter) null));
 
-		try {
-			servletContext.addFilter((String) null, (jakarta.servlet.Filter) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
-
-		try {
-			servletContext.addFilter((String) null, (String) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addFilter((String) null, (String) null));
 	}
 
+	@Test
 	public void test_140_2_6_addListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -839,32 +845,21 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.addListener((Class<? extends java.util.EventListener>) null);
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addListener((Class<? extends java.util.EventListener>) null));
 
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addListener((java.util.EventListener) null));
 
-		try {
-			servletContext.addListener((java.util.EventListener) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
-
-		try {
-			servletContext.addListener((String) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addListener((String) null));
 	}
 
+	@Test
 	public void test_140_2_6_addServlet() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -873,32 +868,21 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.addServlet((String) null, (Class<? extends jakarta.servlet.Servlet>) null);
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addServlet((String) null, (Class<? extends jakarta.servlet.Servlet>) null));
 
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addServlet((String) null, (jakarta.servlet.Servlet) null));
 
-		try {
-			servletContext.addServlet((String) null, (jakarta.servlet.Servlet) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
-
-		try {
-			servletContext.addServlet((String) null, (String) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.addServlet((String) null, (String) null));
 	}
 
+	@Test
 	public void test_140_2_6_createFilter() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -907,18 +891,15 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.createFilter((Class<? extends jakarta.servlet.Filter>) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.createFilter((Class<? extends jakarta.servlet.Filter>) null));
 	}
 
+	@Test
 	public void test_140_2_6_createListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -927,18 +908,15 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.createListener((Class<? extends java.util.EventListener>) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.createListener((Class<? extends java.util.EventListener>) null));
 	}
 
+	@Test
 	public void test_140_2_6_createServlet() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -947,18 +925,15 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.createServlet((Class<? extends jakarta.servlet.Servlet>) null);
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.createServlet((Class<? extends jakarta.servlet.Servlet>) null));
 	}
 
+	@Test
 	public void test_140_2_6_declareRoles() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -967,18 +942,15 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.declareRoles("user");
-
-			fail();
-		} catch (UnsupportedOperationException uoe) {
-		}
+		assertThatExceptionOfType(UnsupportedOperationException.class)
+				.isThrownBy(() -> servletContext.declareRoles("user"));
 	}
 
+	@Test
 	public void test_140_2_6_attributes() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context1");
@@ -1006,28 +978,30 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		ServletContext servletContext1 = sc1.get();
 		ServletContext servletContext2 = sc2.get();
 
-		assertNotNull(servletContext1);
-		assertNotNull(servletContext2);
+		assertThat(servletContext1).isNotNull();
+		assertThat(servletContext2).isNotNull();
 
 		servletContext1.setAttribute("attribute1", "value1");
-		assertTrue(Collections.list(servletContext1.getAttributeNames()).contains("attribute1"));
-		assertNull(servletContext2.getAttribute("attribute1"));
+		assertThat(Collections.list(servletContext1.getAttributeNames()).contains("attribute1")).isTrue();
+		assertThat(servletContext2.getAttribute("attribute1")).isNull();
 		servletContext1.removeAttribute("attribute1");
-		assertNull(servletContext1.getAttribute("attribute1"));
+		assertThat(servletContext1.getAttribute("attribute1")).isNull();
 
 		servletContext2.setAttribute("attribute2", "value2");
-		assertTrue(Collections.list(servletContext2.getAttributeNames()).contains("attribute2"));
-		assertNull(servletContext1.getAttribute("attribute2"));
+		assertThat(Collections.list(servletContext2.getAttributeNames()).contains("attribute2")).isTrue();
+		assertThat(servletContext1.getAttribute("attribute2")).isNull();
 		servletContext2.removeAttribute("attribute2");
-		assertNull(servletContext2.getAttribute("attribute2"));
+		assertThat(servletContext2.getAttribute("attribute2")).isNull();
 	}
 
+	@Test
 	public void test_140_2_6_getClassLoader() throws Exception {
 		test_140_2_10to12();
 	}
 
+	@Test
 	public void test_140_2_6_getContextPath() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		String contextPath = "/context1";
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -1042,15 +1016,17 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_SELECT, "(osgi.http.whiteboard.context.name=context1)");
 		serviceRegistrations.add(context.registerService(ServletContextListener.class, new MockSCL(sc1), properties));
 
-		assertEquals(contextPath, sc1.get().getContextPath());
+		assertThat(sc1.get().getContextPath()).isEqualTo(contextPath);
 	}
 
+	@Test
 	public void test_140_2_6_initParameters() throws Exception {
 		test_table_140_1_INIT_PARAMs();
 	}
 
+	@Test
 	public void test_140_2_6_getJspConfigdescriptor() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -1059,13 +1035,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		assertNull(servletContext.getJspConfigDescriptor());
+		assertThat(servletContext.getJspConfigDescriptor()).isNull();
 	}
 
+	@Test
 	public void test_140_2_6_getMimeType() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		final AtomicBoolean invoked = new AtomicBoolean(false);
 
@@ -1094,15 +1071,16 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
 		servletContext.getMimeType("index.html");
 
-		assertTrue(invoked.get());
+		assertThat(invoked.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_2_6_getNamedDispatcher() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -1121,15 +1099,16 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
 		RequestDispatcher requestDispatcher = servletContext.getNamedDispatcher("first");
 
-		assertNotNull(requestDispatcher);
+		assertThat(requestDispatcher).isNotNull();
 	}
 
+	@Test
 	public void test_140_2_6_getRealPath() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		final AtomicBoolean invoked = new AtomicBoolean(false);
 
@@ -1158,15 +1137,16 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
 		servletContext.getRealPath("META-INF/MANIFEST.MF");
 
-		assertTrue(invoked.get());
+		assertThat(invoked.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_2_6_getResource() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		final AtomicBoolean invoked = new AtomicBoolean(false);
 
@@ -1195,15 +1175,16 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
 		servletContext.getResource("META-INF/MANIFEST.MF");
 
-		assertTrue(invoked.get());
+		assertThat(invoked.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_2_6_getRequestDispatcher() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -1222,15 +1203,16 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
 		RequestDispatcher requestDispatcher = servletContext.getRequestDispatcher("/bar/someServlet");
 
-		assertNotNull(requestDispatcher);
+		assertThat(requestDispatcher).isNotNull();
 	}
 
+	@Test
 	public void test_140_2_6_getResourceAsStream() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		final AtomicBoolean invoked = new AtomicBoolean(false);
 
@@ -1266,15 +1248,16 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
 		servletContext.getResourceAsStream("META-INF/MANIFEST.MF");
 
-		assertTrue(invoked.get());
+		assertThat(invoked.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_2_6_getResourcePaths() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		final AtomicBoolean invoked = new AtomicBoolean(false);
 
@@ -1303,19 +1286,21 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
 		servletContext.getResourcePaths("/META-INF/");
 
-		assertTrue(invoked.get());
+		assertThat(invoked.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_2_6_getServletContextName() throws Exception {
 		test_140_2_7to8();
 	}
 
+	@Test
 	public void test_140_2_6_getSessionCookieConfig() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
@@ -1325,71 +1310,40 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
 		SessionCookieConfig sessionCookieConfig = servletContext.getSessionCookieConfig();
 
-		assertNotNull(sessionCookieConfig);
+		assertThat(sessionCookieConfig).isNotNull();
 
-		try {
-			sessionCookieConfig.setComment("test");
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> sessionCookieConfig.setComment("test"));
 
-			fail();
-		} catch (IllegalStateException ise) {
-		}
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> sessionCookieConfig.setComment("test"));
 
-		try {
-			sessionCookieConfig.setComment("test");
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> sessionCookieConfig.setDomain("test"));
 
-			fail();
-		} catch (IllegalStateException ise) {
-		}
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> sessionCookieConfig.setHttpOnly(true));
 
-		try {
-			sessionCookieConfig.setDomain("test");
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> sessionCookieConfig.setMaxAge(0));
 
-			fail();
-		} catch (IllegalStateException ise) {
-		}
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> sessionCookieConfig.setName("test"));
 
-		try {
-			sessionCookieConfig.setHttpOnly(true);
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> sessionCookieConfig.setPath("test"));
 
-			fail();
-		} catch (IllegalStateException ise) {
-		}
-
-		try {
-			sessionCookieConfig.setMaxAge(0);
-
-			fail();
-		} catch (IllegalStateException ise) {
-		}
-
-		try {
-			sessionCookieConfig.setName("test");
-
-			fail();
-		} catch (IllegalStateException ise) {
-		}
-
-		try {
-			sessionCookieConfig.setPath("test");
-
-			fail();
-		} catch (IllegalStateException ise) {
-		}
-
-		try {
-			sessionCookieConfig.setSecure(false);
-
-			fail();
-		} catch (IllegalStateException ise) {
-		}
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> sessionCookieConfig.setSecure(false));
 	}
 
+	@Test
 	public void test_140_2_6_setInitParameter() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -1398,18 +1352,15 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.setInitParameter(null, null);
-
-			fail();
-		} catch (IllegalStateException ise) {
-		}
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> servletContext.setInitParameter(null, null));
 	}
 
+	@Test
 	public void test_140_2_6_setSessionTrackingModes() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
@@ -1418,18 +1369,15 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
+		assertThat(servletContext).isNotNull();
 
-		try {
-			servletContext.setSessionTrackingModes(null);
-
-			fail();
-		} catch (IllegalStateException ise) {
-		}
+		assertThatExceptionOfType(IllegalStateException.class)
+				.isThrownBy(() -> servletContext.setSessionTrackingModes(null));
 	}
 
+	@Test
 	public void test_table_140_3_HTTP_WHITEBOARD_CONTEXT_SELECT() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context1");
@@ -1454,12 +1402,13 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNotNull(servletContext);
-		assertEquals("context2", servletContext.getServletContextName());
+		assertThat(servletContext).isNotNull();
+		assertThat(servletContext.getServletContextName()).isEqualTo("context2");
 	}
 
+	@Test
 	public void test_table_140_3_HTTP_WHITEBOARD_TARGET() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		AtomicReference<ServletContext> sc1 = new AtomicReference<ServletContext>();
 
@@ -1470,11 +1419,12 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 
 		ServletContext servletContext = sc1.get();
 
-		assertNull(servletContext);
+		assertThat(servletContext).isNull();
 	}
 
+	@Test
 	public void test_140_3_4to5() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "context1");
@@ -1510,14 +1460,14 @@ public class ServletContextHelperTestCase extends BaseHttpWhiteboardTestCase {
 		Set<String> names = new HashSet<String>();
 
 		for (AtomicReference<ServletContext> scr : scs) {
-			assertNotNull(scr);
+			assertThat(scr).isNotNull();
 			ServletContext servletContext = scr.get();
-			assertNotNull(servletContext);
+			assertThat(servletContext).isNotNull();
 			names.add(servletContext.getServletContextName());
 		}
 
-		assertTrue(names.contains("context1"));
-		assertTrue(names.contains("context2"));
+		assertThat(names.contains("context1")).isTrue();
+		assertThat(names.contains("context2")).isTrue();
 	}
 
 }
