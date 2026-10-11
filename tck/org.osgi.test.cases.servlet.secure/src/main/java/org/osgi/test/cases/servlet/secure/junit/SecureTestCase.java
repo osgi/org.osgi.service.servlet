@@ -17,6 +17,9 @@
  *******************************************************************************/
 package org.osgi.test.cases.servlet.secure.junit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import java.io.FilePermission;
 import java.security.AccessControlContext;
 import java.security.AccessControlException;
@@ -25,6 +28,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.osgi.framework.AdminPermission;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -39,10 +44,10 @@ import org.osgi.service.servlet.whiteboard.HttpWhiteboardConstants;
 
 public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 
-	@Override
-	protected void setUp() throws Exception {
+	@BeforeEach
+	public void setUp() throws Exception {
 		super.setUp();
-		assertNotNull(System.getSecurityManager());
+		assertThat(System.getSecurityManager()).isNotNull();
 	}
 
 	/*
@@ -53,8 +58,9 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 	 * Since a Resource may be associated with any service, the RI needs GET on
 	 * interfaces '*'.
 	 */
+	@Test
 	public void testImplHasGETServicePermission() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		ServiceReference<HttpServiceRuntime> serviceReference =
 				context.getServiceReference(HttpServiceRuntime.class);
@@ -66,7 +72,7 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 		try {
 			acc.checkPermission(new ServicePermission("*", ServicePermission.GET));
 		} catch (AccessControlException ace) {
-			fail();
+			fail("");
 		}
 	}
 
@@ -75,8 +81,9 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 	 * ServicePermission[org.osgi.service.servlet.runtime.HttpServiceRuntime, GET]
 	 * to obtain the HttpServiceRuntime service and access the DTO types.
 	 */
+	@Test
 	public void testHttpServiceRuntimeClientHasGETServicePermission_tb1() throws Exception {
-		Bundle bundle = install("tb1.jar");
+		Bundle bundle = installer.installBundle("tb1.jar", false);
 
 		try {
 			bundle.start();
@@ -85,7 +92,7 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 
 			acc.checkPermission(new ServicePermission(HttpServiceRuntime.class.getName(), ServicePermission.GET));
 		} catch (AccessControlException ace) {
-			fail();
+			fail("");
 		} finally {
 			bundle.uninstall();
 		}
@@ -96,8 +103,9 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 	 * ServicePermission[org.osgi.service.servlet.runtime.HttpServiceRuntime, GET]
 	 * to obtain the HttpServiceRuntime service and access the DTO types.
 	 */
+	@Test
 	public void testHttpServiceRuntimeClientHasNoGETServicePermission_tb2() throws Exception {
-		Bundle bundle = install("tb2.jar");
+		Bundle bundle = installer.installBundle("tb2.jar", false);
 
 		try {
 			bundle.start();
@@ -106,7 +114,7 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 
 			acc.checkPermission(new ServicePermission(HttpServiceRuntime.class.getName(), ServicePermission.GET));
 
-			fail();
+			fail("");
 		} catch (AccessControlException ace) {
 		} finally {
 			bundle.uninstall();
@@ -118,8 +126,9 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 	 * AdminPermission[*,RESOURCE] so that bundles may use the default
 	 * ServletContextHelper implementation.
 	 */
+	@Test
 	public void testImplHasRESOURCEAdminPermission() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		ServiceReference<HttpServiceRuntime> serviceReference =
 				context.getServiceReference(HttpServiceRuntime.class);
@@ -131,7 +140,7 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 		try {
 			acc.checkPermission(new AdminPermission("*", AdminPermission.RESOURCE));
 		} catch (AccessControlException ace) {
-			fail();
+			fail("");
 		}
 	}
 
@@ -141,8 +150,9 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 	 * use the captured AccessControlContext object when accessing resources
 	 * returned by the ServletContextHelper service.
 	 */
+	@Test
 	public void testImplCapturesAccessControlContext() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		ServiceReference<HttpServiceRuntime> serviceReference =
 				context.getServiceReference(HttpServiceRuntime.class);
@@ -154,10 +164,10 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 		try {
 			acc.checkPermission(new FilePermission("/etc/passwd", "read"));
 		} catch (AccessControlException ace) {
-			fail();
+			fail("");
 		}
 
-		bundle = install("tb1.jar");
+		bundle = installer.installBundle("tb1.jar", false);
 
 		try {
 			bundle.start();
@@ -169,7 +179,7 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 
 			Map<String, List<String>> result = request("/etc/passwd", null);
 
-			assertEquals("500", result.get("responseCode").get(0));
+			assertThat(result.get("responseCode").get(0)).isEqualTo("500");
 		} finally {
 			bundle.uninstall();
 		}
@@ -199,10 +209,11 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 	/**
 	 * Test the permissions for uploads
 	 */
+	@Test
 	public void testUploadPermissions() throws Exception {
 		long before = this.getHttpRuntimeChangeCount();
 
-		Bundle bundle = install("tb1.jar");
+		Bundle bundle = installer.installBundle("tb1.jar", false);
 
 		try {
 			bundle.start();
@@ -210,26 +221,24 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 			before = this.waitForRegistration(before);
 
 			ServletDTO servletDTO = searchServletDTO("/postdefault");
-			assertNotNull(servletDTO);
-			assertFalse(servletDTO instanceof FailedServletDTO);
+			assertThat(servletDTO).isNotNull();
+			assertThat(servletDTO).isNotInstanceOf(FailedServletDTO.class);
 
 			servletDTO = searchServletDTO("/postfailedwrite");
-			assertNotNull(servletDTO);
-			assertTrue(servletDTO instanceof FailedServletDTO);
-			assertEquals(
-					DTOConstants.FAILURE_REASON_SERVLET_WRITE_TO_LOCATION_DENIED,
-					((FailedServletDTO) servletDTO).failureReason);
+			assertThat(servletDTO).isNotNull();
+			assertThat(servletDTO).isInstanceOf(FailedServletDTO.class);
+			assertThat(((FailedServletDTO) servletDTO).failureReason).isEqualTo(DTOConstants.FAILURE_REASON_SERVLET_WRITE_TO_LOCATION_DENIED);
 
 			servletDTO = searchServletDTO("/postlocation");
-			assertNotNull(servletDTO);
-			assertFalse(servletDTO instanceof FailedServletDTO);
+			assertThat(servletDTO).isNotNull();
+			assertThat(servletDTO).isNotInstanceOf(FailedServletDTO.class);
 		} finally {
 			bundle.uninstall();
 		}
 
 		before = this.getHttpRuntimeChangeCount();
 
-		bundle = install("tb2.jar");
+		bundle = installer.installBundle("tb2.jar", false);
 
 		try {
 			bundle.start();
@@ -237,11 +246,9 @@ public class SecureTestCase extends BaseHttpWhiteboardTestCase {
 			before = this.waitForRegistration(before);
 
 			ServletDTO servletDTO = searchServletDTO("/post");
-			assertNotNull(servletDTO);
-			assertTrue(servletDTO instanceof FailedServletDTO);
-			assertEquals(
-					DTOConstants.FAILURE_REASON_SERVLET_READ_FROM_DEFAULT_DENIED,
-					((FailedServletDTO) servletDTO).failureReason);
+			assertThat(servletDTO).isNotNull();
+			assertThat(servletDTO).isInstanceOf(FailedServletDTO.class);
+			assertThat(((FailedServletDTO) servletDTO).failureReason).isEqualTo(DTOConstants.FAILURE_REASON_SERVLET_READ_FROM_DEFAULT_DENIED);
 
 		} finally {
 			bundle.uninstall();

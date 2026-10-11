@@ -17,6 +17,8 @@
  *******************************************************************************/
 package org.osgi.test.cases.servlet.junit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.util.Date;
 import java.util.Dictionary;
@@ -24,6 +26,7 @@ import java.util.Hashtable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.jupiter.api.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.servlet.context.ServletContextHelper;
@@ -57,8 +60,9 @@ import jakarta.servlet.http.HttpSessionListener;
 
 public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 
+	@Test
 	public void test_140_7_validation() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "true");
@@ -67,27 +71,28 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		ListenerDTO listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNotNull(listenerDTO);
+		assertThat(listenerDTO).isNotNull();
 
 		properties.remove(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER);
 		sr.setProperties(properties);
 
 		listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNull(listenerDTO);
+		assertThat(listenerDTO).isNull();
 
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER, "blah");
 		sr.setProperties(properties);
 
 		FailedListenerDTO failedListenerDTO = getFailedListenerDTOByServiceId(getServiceId(sr));
-		assertNotNull(failedListenerDTO);
-		assertEquals(DTOConstants.FAILURE_REASON_VALIDATION_FAILED, failedListenerDTO.failureReason);
+		assertThat(failedListenerDTO).isNotNull();
+		assertThat(failedListenerDTO.failureReason).isEqualTo(DTOConstants.FAILURE_REASON_VALIDATION_FAILED);
 
 		listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNull(listenerDTO);
+		assertThat(listenerDTO).isNull();
 	}
 
+	@Test
 	public void test_140_7_ServletContextListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		final AtomicBoolean invokedDestroy = new AtomicBoolean(false);
 		final AtomicBoolean invokedInit = new AtomicBoolean(false);
 
@@ -111,20 +116,21 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		ListenerDTO listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNotNull(listenerDTO);
-		assertTrue(invokedInit.get());
-		assertFalse(invokedDestroy.get());
+		assertThat(listenerDTO).isNotNull();
+		assertThat(invokedInit.get()).isTrue();
+		assertThat(invokedDestroy.get()).isFalse();
 		invokedInit.set(false);
 
 		properties.remove(HttpWhiteboardConstants.HTTP_WHITEBOARD_LISTENER);
 		sr.setProperties(properties);
 
-		assertTrue(invokedDestroy.get());
-		assertFalse(invokedInit.get());
+		assertThat(invokedDestroy.get()).isTrue();
+		assertThat(invokedInit.get()).isFalse();
 	}
 
+	@Test
 	public void test_140_7_ServletContextAttributeListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		final AtomicBoolean invokedAdded = new AtomicBoolean(false);
 		final AtomicBoolean invokedRemoved = new AtomicBoolean(false);
 		final AtomicBoolean invokedReplaced = new AtomicBoolean(false);
@@ -154,7 +160,7 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		ListenerDTO listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNotNull(listenerDTO);
+		assertThat(listenerDTO).isNotNull();
 
 		class AServlet extends HttpServlet {
 
@@ -182,26 +188,27 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/a");
 		serviceRegistrations.add(context.registerService(Servlet.class, new AServlet(), properties));
-		assertEquals("set", request("a?set=a"));
-		assertTrue(invokedAdded.get());
-		assertFalse(invokedRemoved.get());
-		assertFalse(invokedReplaced.get());
+		assertThat(request("a?set=a")).isEqualTo("set");
+		assertThat(invokedAdded.get()).isTrue();
+		assertThat(invokedRemoved.get()).isFalse();
+		assertThat(invokedReplaced.get()).isFalse();
 		invokedAdded.set(false);
 
-		assertEquals("set", request("a?set=a"));
-		assertFalse(invokedRemoved.get());
-		assertFalse(invokedAdded.get());
-		assertTrue(invokedReplaced.get());
+		assertThat(request("a?set=a")).isEqualTo("set");
+		assertThat(invokedRemoved.get()).isFalse();
+		assertThat(invokedAdded.get()).isFalse();
+		assertThat(invokedReplaced.get()).isTrue();
 		invokedReplaced.set(false);
 
-		assertEquals("rem", request("a?rem=a"));
-		assertTrue(invokedRemoved.get());
-		assertFalse(invokedAdded.get());
-		assertFalse(invokedReplaced.get());
+		assertThat(request("a?rem=a")).isEqualTo("rem");
+		assertThat(invokedRemoved.get()).isTrue();
+		assertThat(invokedAdded.get()).isFalse();
+		assertThat(invokedReplaced.get()).isFalse();
 	}
 
+	@Test
 	public void test_140_7_ServletRequestListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		final AtomicBoolean invokedInit = new AtomicBoolean(false);
 		final AtomicBoolean invokedDestroy = new AtomicBoolean(false);
 
@@ -225,19 +232,20 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		ListenerDTO listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNotNull(listenerDTO);
+		assertThat(listenerDTO).isNotNull();
 
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/a");
 		serviceRegistrations.add(context.registerService(Servlet.class, new MockServlet().content("a"), properties));
 
-		assertEquals("a", request("a"));
-		assertTrue(invokedInit.get());
-		assertTrue(invokedDestroy.get());
+		assertThat(request("a")).isEqualTo("a");
+		assertThat(invokedInit.get()).isTrue();
+		assertThat(invokedDestroy.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_7_ServletRequestAttributeListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		final AtomicBoolean invokedAdded = new AtomicBoolean(false);
 		final AtomicBoolean invokedRemoved = new AtomicBoolean(false);
 		final AtomicBoolean invokedReplaced = new AtomicBoolean(false);
@@ -267,7 +275,7 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		ListenerDTO listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNotNull(listenerDTO);
+		assertThat(listenerDTO).isNotNull();
 
 		class AServlet extends HttpServlet {
 
@@ -289,14 +297,15 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/a");
 		serviceRegistrations.add(context.registerService(Servlet.class, new AServlet(), properties));
-		assertEquals("a", request("a"));
-		assertTrue(invokedAdded.get());
-		assertTrue(invokedRemoved.get());
-		assertTrue(invokedReplaced.get());
+		assertThat(request("a")).isEqualTo("a");
+		assertThat(invokedAdded.get()).isTrue();
+		assertThat(invokedRemoved.get()).isTrue();
+		assertThat(invokedReplaced.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_7_HttpSessionListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME, "a");
@@ -327,7 +336,7 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(srB);
 
 		ListenerDTO listenerDTO = getListenerDTOByServiceId("a", getServiceId(srB));
-		assertNotNull(listenerDTO);
+		assertThat(listenerDTO).isNotNull();
 
 		class AServlet extends HttpServlet {
 
@@ -350,14 +359,15 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/a");
 		serviceRegistrations.add(context.registerService(Servlet.class, new AServlet(), properties));
 
-		assertEquals("", request("a"));
-		assertTrue(invokedCreate.get());
+		assertThat(request("a")).isEmpty();
+		assertThat(invokedCreate.get()).isTrue();
 		srA.unregister();
-		assertTrue(invokedDestroy.get());
+		assertThat(invokedDestroy.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_7_HttpSessionAttributeListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		final AtomicBoolean invokedAdded = new AtomicBoolean(false);
 		final AtomicBoolean invokedRemoved = new AtomicBoolean(false);
 		final AtomicBoolean invokedReplaced = new AtomicBoolean(false);
@@ -387,7 +397,7 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		ListenerDTO listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNotNull(listenerDTO);
+		assertThat(listenerDTO).isNotNull();
 
 		class AServlet extends HttpServlet {
 
@@ -410,14 +420,15 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/a");
 		serviceRegistrations.add(context.registerService(Servlet.class, new AServlet(), properties));
-		assertEquals("a", request("a"));
-		assertTrue(invokedAdded.get());
-		assertTrue(invokedRemoved.get());
-		assertTrue(invokedReplaced.get());
+		assertThat(request("a")).isEqualTo("a");
+		assertThat(invokedAdded.get()).isTrue();
+		assertThat(invokedRemoved.get()).isTrue();
+		assertThat(invokedReplaced.get()).isTrue();
 	}
 
+	@Test
 	public void test_140_7_HttpSessionIdListener() throws Exception {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 		final AtomicBoolean invoked = new AtomicBoolean(false);
 
 		class AHttpSessionIdListener implements HttpSessionIdListener {
@@ -435,7 +446,7 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		serviceRegistrations.add(sr);
 
 		ListenerDTO listenerDTO = getListenerDTOByServiceId(DEFAULT, getServiceId(sr));
-		assertNotNull(listenerDTO);
+		assertThat(listenerDTO).isNotNull();
 
 		class AServlet extends HttpServlet {
 
@@ -456,7 +467,7 @@ public class ListenerTestCase extends BaseHttpWhiteboardTestCase {
 		properties = new Hashtable<String, Object>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN, "/a");
 		serviceRegistrations.add(context.registerService(Servlet.class, new AServlet(), properties));
-		assertEquals("a", request("a"));
-		assertTrue(invoked.get());
+		assertThat(request("a")).isEqualTo("a");
+		assertThat(invoked.get()).isTrue();
 	}
 }

@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.junit.jupiter.api.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.servlet.context.ServletContextHelper;
 import org.osgi.service.servlet.whiteboard.HttpWhiteboardConstants;
@@ -48,7 +49,7 @@ public class AuthenticationTestCase extends BaseHttpWhiteboardTestCase {
 	private static final String	REC_PAR		= "rec";
 
 	private void setup(final Queue<String> callStack) throws Exception {
-		final BundleContext context = getContext();
+		final BundleContext context = this.context;
 
 		// setup context 1
 		serviceRegistrations.add(context.registerService(
@@ -164,6 +165,7 @@ public class AuthenticationTestCase extends BaseHttpWhiteboardTestCase {
 										+ "=context2)")));
 	}
 
+	@Test
 	public void test_handleFinishSecurity() throws Exception {
 		final Queue<String> callStack = new ConcurrentLinkedQueue<>();
 		setup(callStack);
@@ -184,6 +186,7 @@ public class AuthenticationTestCase extends BaseHttpWhiteboardTestCase {
 				"finish2");
 	}
 
+	@Test
 	public void test_includeSecurity() throws Exception {
 		final Queue<String> callStack = new ConcurrentLinkedQueue<>();
 		setup(callStack);
@@ -199,6 +202,7 @@ public class AuthenticationTestCase extends BaseHttpWhiteboardTestCase {
 		callStack.clear();
 	}
 
+	@Test
 	public void test_forwardSecurity() throws Exception {
 		final Queue<String> callStack = new ConcurrentLinkedQueue<>();
 		setup(callStack);
@@ -214,6 +218,7 @@ public class AuthenticationTestCase extends BaseHttpWhiteboardTestCase {
 		callStack.clear();
 	}
 
+	@Test
 	public void test_exceptionFromServlet() throws Exception {
 		final Queue<String> callStack = new ConcurrentLinkedQueue<>();
 		setup(callStack);

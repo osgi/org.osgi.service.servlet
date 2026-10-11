@@ -17,12 +17,15 @@
  *******************************************************************************/
 package org.osgi.test.cases.servlet.junit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.servlet.runtime.dto.PreprocessorDTO;
@@ -44,6 +47,7 @@ import jakarta.servlet.http.HttpServletResponseWrapper;
  */
 public class PreprocessorTestCase extends BaseHttpWhiteboardTestCase {
 
+	@Test
 	public void testPreprocessorInitParameters() throws Exception {
 		Dictionary<String,Object> properties = new Hashtable<>();
 		properties
@@ -57,7 +61,7 @@ public class PreprocessorTestCase extends BaseHttpWhiteboardTestCase {
 						+ "param3", 345l);
 
 		long before = this.getHttpRuntimeChangeCount();
-		final ServiceRegistration<Preprocessor> reg = getContext()
+		final ServiceRegistration<Preprocessor> reg = context
 				.registerService(Preprocessor.class, new MockPreprocessor(),
 						properties);
 		this.serviceRegistrations.add(reg);
@@ -65,14 +69,15 @@ public class PreprocessorTestCase extends BaseHttpWhiteboardTestCase {
 
 		final PreprocessorDTO[] dtos = this.getHttpServiceRuntime()
 				.getRuntimeDTO().preprocessorDTOs;
-		assertEquals(1, dtos.length);
+		assertThat(dtos).hasSize(1);
 
-		assertTrue(dtos[0].initParams.containsKey("param1"));
-		assertTrue(dtos[0].initParams.containsKey("param2"));
-		assertFalse(dtos[0].initParams.containsKey("param3"));
-		assertEquals(getServiceId(reg), dtos[0].serviceId);
+		assertThat(dtos[0].initParams).containsKey("param1");
+		assertThat(dtos[0].initParams).containsKey("param2");
+		assertThat(dtos[0].initParams).doesNotContainKey("param3");
+		assertThat(dtos[0].serviceId).isEqualTo(getServiceId(reg));
 	}
 
+	@Test
 	public void testPreprocessorRanging() throws Exception {
 		// register preprocessor with ranking -5
 		Dictionary<String,Object> properties = new Hashtable<>();
@@ -80,7 +85,7 @@ public class PreprocessorTestCase extends BaseHttpWhiteboardTestCase {
 
 		long before = this.getHttpRuntimeChangeCount();
 		this.serviceRegistrations
-				.add(getContext().registerService(Preprocessor.class.getName(),
+				.add(context.registerService(Preprocessor.class.getName(),
 						new MockPreprocessor().around("d"), properties));
 		before = this.waitForRegistration(before);
 
@@ -89,7 +94,7 @@ public class PreprocessorTestCase extends BaseHttpWhiteboardTestCase {
 		properties.put(Constants.SERVICE_RANKING, 8);
 
 		this.serviceRegistrations
-				.add(getContext().registerService(Preprocessor.class.getName(),
+				.add(context.registerService(Preprocessor.class.getName(),
 						new MockPreprocessor().around("a"), properties));
 		before = this.waitForRegistration(before);
 
@@ -99,7 +104,7 @@ public class PreprocessorTestCase extends BaseHttpWhiteboardTestCase {
 														// ranking = 0
 
 		this.serviceRegistrations
-				.add(getContext().registerService(Preprocessor.class.getName(),
+				.add(context.registerService(Preprocessor.class.getName(),
 						new MockPreprocessor().around("b"), properties));
 		before = this.waitForRegistration(before);
 
@@ -107,35 +112,36 @@ public class PreprocessorTestCase extends BaseHttpWhiteboardTestCase {
 		properties = new Hashtable<>();
 
 		this.serviceRegistrations
-				.add(getContext().registerService(Preprocessor.class.getName(),
+				.add(context.registerService(Preprocessor.class.getName(),
 						new MockPreprocessor().around("c"), properties));
 		before = this.waitForRegistration(before);
 
 		// check that we have four preprocessors
 		final PreprocessorDTO[] dtos = this.getHttpServiceRuntime()
 				.getRuntimeDTO().preprocessorDTOs;
-		assertEquals(4, dtos.length);
+		assertThat(dtos).hasSize(4);
 
 		// register endpoint
 		final String path = "/available";
 		properties = new Hashtable<>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN,
 				path);
-		this.serviceRegistrations.add(getContext().registerService(
+		this.serviceRegistrations.add(context.registerService(
 				Servlet.class, new MockServlet().content("hello"), properties));
 
-		assertEquals("abcdhellodcba", request(path));
+		assertThat(request(path)).isEqualTo("abcdhellodcba");
 	}
 
 	/**
 	 * Test a request with a servlet registered at that url and check if the
 	 * preprocessor is invoked. Do the same with a non existing url.
 	 */
+	@Test
 	public void testPreprocessorInvocation() throws Exception {
 		// register preprocessor
 		final List<String> filterActions = new ArrayList<>();
 		long before = this.getHttpRuntimeChangeCount();
-		this.serviceRegistrations.add(getContext().registerService(
+		this.serviceRegistrations.add(context.registerService(
 				Preprocessor.class.getName(), new MockPreprocessor() {
 
 					@Override
@@ -186,21 +192,21 @@ public class PreprocessorTestCase extends BaseHttpWhiteboardTestCase {
 		Dictionary<String,Object> properties = new Hashtable<>();
 		properties.put(HttpWhiteboardConstants.HTTP_WHITEBOARD_SERVLET_PATTERN,
 				path);
-		this.serviceRegistrations.add(getContext().registerService(
+		this.serviceRegistrations.add(context.registerService(
 				Servlet.class, new MockServlet().content("hello"), properties));
 
-		assertEquals("hello", request(path));
-		assertEquals(2, filterActions.size());
-		assertEquals("a", filterActions.get(0));
-		assertEquals("b", filterActions.get(1));
+		assertThat(request(path)).isEqualTo("hello");
+		assertThat(filterActions).hasSize(2);
+		assertThat(filterActions.get(0)).isEqualTo("a");
+		assertThat(filterActions.get(1)).isEqualTo("b");
 
 		// request a non existing pattern - this will somehow set the status
 		// code to 404
 		filterActions.clear();
 		request("/foo");
-		assertEquals(3, filterActions.size());
-		assertEquals("a", filterActions.get(0));
-		assertEquals("404", filterActions.get(1));
-		assertEquals("b", filterActions.get(2));
+		assertThat(filterActions).hasSize(3);
+		assertThat(filterActions.get(0)).isEqualTo("a");
+		assertThat(filterActions.get(1)).isEqualTo("404");
+		assertThat(filterActions.get(2)).isEqualTo("b");
 	}
 }

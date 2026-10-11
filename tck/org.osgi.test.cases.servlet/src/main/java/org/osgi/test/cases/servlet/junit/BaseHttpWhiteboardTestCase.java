@@ -17,11 +17,15 @@
  *******************************************************************************/
 package org.osgi.test.cases.servlet.junit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,6 +37,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Manifest;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -53,11 +59,19 @@ import org.osgi.service.servlet.runtime.dto.ResourceDTO;
 import org.osgi.service.servlet.runtime.dto.ServletContextDTO;
 import org.osgi.service.servlet.runtime.dto.ServletDTO;
 import org.osgi.service.servlet.whiteboard.HttpWhiteboardConstants;
-import org.osgi.test.support.OSGiTestCase;
+import org.osgi.test.common.annotation.InjectBundleContext;
+import org.osgi.test.common.annotation.InjectBundleInstaller;
+import org.osgi.test.common.install.BundleInstaller;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
-public abstract class BaseHttpWhiteboardTestCase extends OSGiTestCase {
+public abstract class BaseHttpWhiteboardTestCase {
+
+	@InjectBundleContext
+	BundleContext		context;
+
+	@InjectBundleInstaller
+	BundleInstaller		installer;
 
 	public static final String														DEFAULT	= HttpWhiteboardConstants.HTTP_WHITEBOARD_DEFAULT_CONTEXT_NAME;
 
@@ -280,12 +294,12 @@ public abstract class BaseHttpWhiteboardTestCase extends OSGiTestCase {
 	}
 
 	protected HttpServiceRuntime getHttpServiceRuntime() {
-		BundleContext context = getContext();
+		BundleContext context = this.context;
 
 		ServiceReference<HttpServiceRuntime> serviceReference =
 				context.getServiceReference(HttpServiceRuntime.class);
 
-		assertNotNull(serviceReference);
+		assertThat(serviceReference).isNotNull();
 
 		return context.getService(serviceReference);
 	}
@@ -362,7 +376,7 @@ public abstract class BaseHttpWhiteboardTestCase extends OSGiTestCase {
 		}
 
 		return new URL(
-				"http", getProperty("org.apache.felix.http.host"),
+				"http", AccessController.doPrivileged((PrivilegedAction<String>) () -> context.getProperty("org.apache.felix.http.host")),
 				getIntegerProperty("org.osgi.service.http.port", 8080), path);
 	}
 
@@ -383,7 +397,7 @@ public abstract class BaseHttpWhiteboardTestCase extends OSGiTestCase {
 	protected String request(String path) throws InterruptedException, IOException {
 		URL serverURL = getServerURL(path);
 
-		log("Requesting: " + serverURL.toString()); //$NON-NLS-1$
+		System.out.println("Requesting: " + serverURL.toString()); //$NON-NLS-1$
 
 		HttpURLConnection connection = (HttpURLConnection) serverURL.openConnection();
 
@@ -431,7 +445,7 @@ public abstract class BaseHttpWhiteboardTestCase extends OSGiTestCase {
 	protected Map<String, List<String>> request(String path, Map<String, List<String>> headers) throws InterruptedException, IOException {
 		URL serverURL = getServerURL(path);
 
-		log("Requesting: " + serverURL.toString()); //$NON-NLS-1$
+		System.out.println("Requesting: " + serverURL.toString()); //$NON-NLS-1$
 
 		HttpURLConnection connection = (HttpURLConnection) serverURL.openConnection();
 
@@ -466,16 +480,16 @@ public abstract class BaseHttpWhiteboardTestCase extends OSGiTestCase {
 		}
 	}
 
-	@Override
-	protected void setUp() throws Exception {
+	@BeforeEach
+	public void setUp() throws Exception {
 		for (String bundlePath : getBundlePaths()) {
-			Bundle bundle = install(bundlePath);
+			Bundle bundle = installer.installBundle(bundlePath, false);
 
 			bundle.start();
 
 			bundles.add(bundle);
 		}
-		this.runtimeTracker = new ServiceTracker<>(getContext(),
+		this.runtimeTracker = new ServiceTracker<>(context,
 				HttpServiceRuntime.class,
 				new ServiceTrackerCustomizer<HttpServiceRuntime,ServiceReference<HttpServiceRuntime>>() {
 
@@ -509,8 +523,8 @@ public abstract class BaseHttpWhiteboardTestCase extends OSGiTestCase {
 		this.runtimeTracker.open();
 	}
 
-	@Override
-	protected void tearDown() throws Exception {
+	@AfterEach
+	public void tearDown() throws Exception {
 		if (this.runtimeTracker != null) {
 			this.runtimeTracker.close();
 			this.runtimeTracker = null;
@@ -556,5 +570,17 @@ public abstract class BaseHttpWhiteboardTestCase extends OSGiTestCase {
 			maxAttempts--;
 		}
 		return this.httpRuntimeChangeCount.longValue();
+	}
+	public int getIntegerProperty(String key, int defaultValue) {
+		String propValue = AccessController.doPrivileged(
+				(PrivilegedAction<String>) () -> context.getProperty(key));
+		if (propValue == null) {
+			return defaultValue;
+		}
+		try {
+			return Integer.parseInt(propValue);
+		} catch (NumberFormatException e) {
+			return defaultValue;
+		}
 	}
 }
