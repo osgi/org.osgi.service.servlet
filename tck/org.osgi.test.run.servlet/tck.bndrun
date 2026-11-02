@@ -54,6 +54,8 @@ tck.range: ${range;[===,==+);${version_cleanup;${1}}}
 
 # -runbundles is committed and verified by the build; after a dependency
 # change update it with: mvn bnd-resolver:resolve
+# slf4j 2 binds its provider once, at the first logger: slf4j starts at
+# level 1, before the implementation (all others at 2), or it logs nothing.
 -runbundles: \
 	assertj-core;version='${tck.range;${assertj.version}}',\
 	junit-jupiter-api;version='${tck.range;${junit-jupiter.version}}',\
@@ -71,5 +73,5 @@ tck.range: ${range;[===,==+);${version_cleanup;${1}}}
 	org.osgi.test.cases.servlet;version='${tck.range;${revision}}',\
 	org.osgi.test.common;version='${tck.range;${osgi-test.version}}',\
 	org.osgi.test.junit5;version='${tck.range;${osgi-test.version}}',\
-	slf4j.api;version='${tck.range;${slf4j.version}}',\
-	slf4j.simple;version='${tck.range;${slf4j.version}}'
+	slf4j.api;version='${tck.range;${slf4j.version}}';startlevel=1,\
+	slf4j.simple;version='${tck.range;${slf4j.version}}';startlevel=1
